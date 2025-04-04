@@ -18,21 +18,29 @@ public class PlayerController : MonoBehaviour
     private InputAction moveAction;
     private InputAction lookAction;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        moveAction = inputs.FindAction("Movement");
-        moveAction = inputs.FindAction("Look");
+        moveAction = inputs.FindActionMap("Player").FindAction("Movement");
+        moveAction = inputs.FindActionMap("Player").FindAction("Look");
         //moveAction = inputs.FindAction("Interact");
+
+    }
+
+    void Start()
+    {
+        
     }
 
     private void OnEnable()
     {
-        
+        moveAction.Enable();
+        lookAction.Enable();
     }
     private void OnDisable()
     {
-        
+        moveAction.Disable();
+        lookAction.Disable();
     }
 
     // Update is called once per frame
