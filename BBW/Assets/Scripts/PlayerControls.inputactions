@@ -6,7 +6,7 @@
             "id": "140d04a3-e038-4e52-9e3a-5da58d0bc4f3",
             "actions": [
                 {
-                    "name": "Movement",
+                    "name": "Move",
                     "type": "Value",
                     "id": "ed66ce4c-78fa-4ad6-ad3d-81476b6a8417",
                     "expectedControlType": "Vector2",
@@ -22,6 +22,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "Interact",
+                    "type": "Button",
+                    "id": "5eadc261-92ee-41ce-97a3-e77d38b5ed13",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -32,7 +41,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Movement",
+                    "action": "Move",
                     "isComposite": true,
                     "isPartOfComposite": false
                 },
@@ -43,7 +52,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Movement",
+                    "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": true
                 },
@@ -54,7 +63,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Movement",
+                    "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": true
                 },
@@ -65,7 +74,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Movement",
+                    "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": true
                 },
@@ -76,7 +85,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Movement",
+                    "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": true
                 },
@@ -87,7 +96,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Movement",
+                    "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -110,6 +119,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "cd2f7505-8ee4-4274-90cb-a3548c911234",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "944bdd8b-cac6-4d55-bf47-96d896c37ff8",
+                    "path": "<Gamepad>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Interact",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
