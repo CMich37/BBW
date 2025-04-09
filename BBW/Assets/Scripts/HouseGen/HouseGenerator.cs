@@ -1,32 +1,38 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class RoomType
-{
-    public string name; // "Living Room", "Kitchen", etc.
-    public GameObject[] variants; // A, B, C versions
-    public bool isFirstFloorOnly;
-    public bool canHaveBasementEntrance;
-    public bool canHaveAtticEntrance;
-}
-
 public class HouseGenerator : MonoBehaviour
 {
-    [Header("Room Settings")]
-    public RoomType[] roomTypes; // Assign all room types and variants in Inspector
+    [Header("Config")]
+    public float basementHeight = 3f;
+    public float atticHeight = 2.5f;
+    public float floorHeight = 3f;
+    public float hallwayWidth = 2f;
+    public float roomSpacing = 5f;
+
+    [Header("Prefabs")]
+    public GameObject basementPrefab;
+    public GameObject atticPrefab;
+    public GameObject hallwayPrefab;
     public GameObject doorPrefab;
-    public GameObject windowPrefab;
 
-    [Header("House Settings")]
-    public bool hasBasement = true;
-    public bool hasAttic = true;
-    public int minFloors = 1;
-    public int maxFloors = 2;
-    public float roomSpacing = 10f;
-    // public bool allRoomsOnFirstFloor = false;
+    [Header("Room Types")]
+    public RoomTypeSO foyer;
+    public RoomTypeSO kitchen;
+    public RoomTypeSO livingRoom;
+    public RoomTypeSO[] otherRooms;
 
-    private List<GameObject> allRooms = new List<GameObject>();
+    private List<RoomInstance> placedRooms = new List<RoomInstance>();
+    private bool isFourFloors;
+    private GameObject currentFloorParent;
+
+    private class RoomInstance
+    {
+        public GameObject gameObject;
+        public RoomTypeSO type;
+        public Vector2Int position;
+        public Vector2Int dimensions;
+    }
 
     void Start()
     {
@@ -35,123 +41,196 @@ public class HouseGenerator : MonoBehaviour
 
     void GenerateHouse()
     {
-        int totalFloors = Random.Range(minFloors, maxFloors + 1);
-        bool distributeRooms = totalFloors > 1;
-
-        // Generate main floors
-        for (int floorNum = 0; floorNum < totalFloors; floorNum++)
+        isFourFloors = Random.Range(0, 2) == 1;
+        CreateBasement();
+        CreateFirstFloor();
+        
+        if (isFourFloors)
         {
-            GenerateFloor(floorNum, distributeRooms);
+            CreateSecondFloor();
         }
-
-        if (hasBasement) GenerateBasement();
-        if (hasAttic) GenerateAttic();
-        AddDoorsAndWindows();
+        
+        CreateAttic();
+        ConnectAllRooms();
     }
 
-    void GenerateFloor(int floorNum, bool distributeRooms)
+    void CreateBasement()
     {
-        List<RoomType> availableRooms = new List<RoomType>(roomTypes);
-        List<RoomType> roomsForThisFloor = new List<RoomType>();
+        GameObject basement = Instantiate(basementPrefab, Vector3.down * basementHeight, Quaternion.identity);
+    }
 
-        // First floor must have required rooms
-        if (floorNum == 0)
+    void CreateFirstFloor()
+    {
+        currentFloorParent = new GameObject("First Floor");
+        currentFloorParent.transform.position = Vector3.zero;
+        
+        // Place mandatory rooms
+        PlaceRoom(foyer, isFourFloors);
+        PlaceRoom(kitchen);
+        PlaceRoom(livingRoom);
+
+        // Place optional rooms
+        int roomsToPlace = isFourFloors ? 
+            Random.Range(0, otherRooms.Length) :  // 4-floor: 0 to all-1
+            otherRooms.Length;                   // 3-floor: all rooms
+
+        for (int i = 0; i < roomsToPlace; i++)
         {
-            foreach (RoomType roomType in roomTypes)
+            PlaceRoom(otherRooms[i]);
+        }
+
+        AddBasementEntrance();
+    }
+
+    void PlaceRoom(RoomTypeSO roomType, bool needsStairs = false)
+    {
+        RoomLayout layout = GetRandomLayout(roomType, needsStairs);
+        Vector2Int position = FindPlacementPosition(layout.dimensions);
+        
+        GameObject roomObj = Instantiate(
+            layout.prefab,
+            new Vector3(position.x, currentFloorParent.transform.position.y, position.y),
+            Quaternion.identity,
+            currentFloorParent.transform
+        );
+        
+        placedRooms.Add(new RoomInstance {
+            gameObject = roomObj,
+            type = roomType,
+            position = position,
+            dimensions = layout.dimensions
+        });
+    }
+
+    RoomLayout GetRandomLayout(RoomTypeSO roomType, bool needsStairs)
+    {
+        if (needsStairs)
+        {
+            List<RoomLayout> validLayouts = new List<RoomLayout>();
+            foreach (var layout in roomType.layouts)
+                if (layout.hasStairs) validLayouts.Add(layout);
+            return validLayouts[Random.Range(0, validLayouts.Count)];
+        }
+        return roomType.layouts[Random.Range(0, roomType.layouts.Length)];
+    }
+
+    Vector2Int FindPlacementPosition(Vector2Int dimensions)
+    {
+        if (placedRooms.Count == 0) return Vector2Int.zero;
+
+        // Simple placement - extend in a line
+        RoomInstance lastRoom = placedRooms[placedRooms.Count - 1];
+        return new Vector2Int(
+            lastRoom.position.x + lastRoom.dimensions.x + 2,
+            lastRoom.position.y
+        );
+    }
+
+    void CreateSecondFloor()
+    {
+        currentFloorParent = new GameObject("Second Floor");
+        currentFloorParent.transform.position = Vector3.up * floorHeight;
+        
+        // Create hallway
+        int remainingRooms = otherRooms.Length - (placedRooms.Count - 3);
+        float hallwayLength = (remainingRooms + 1) * roomSpacing;
+        
+        GameObject hallway = Instantiate(
+            hallwayPrefab,
+            new Vector3(0, floorHeight, hallwayLength/2f),
+            Quaternion.identity,
+            currentFloorParent.transform
+        );
+        hallway.transform.localScale = new Vector3(hallwayWidth, 1, hallwayLength);
+
+        // Place remaining rooms
+        for (int i = 0; i < remainingRooms; i++)
+        {
+            RoomTypeSO roomType = otherRooms[placedRooms.Count - 3 + i];
+            RoomLayout layout = GetRandomLayout(roomType, false);
+            
+            bool leftSide = i % 2 == 0;
+            float zPos = i * roomSpacing + roomSpacing/2f;
+            
+            GameObject roomObj = Instantiate(
+                layout.prefab,
+                new Vector3(
+                    leftSide ? -hallwayWidth - layout.dimensions.x/2 : hallwayWidth + layout.dimensions.x/2,
+                    floorHeight,
+                    zPos
+                ),
+                Quaternion.identity,
+                currentFloorParent.transform
+            );
+            
+            placedRooms.Add(new RoomInstance {
+                gameObject = roomObj,
+                type = roomType,
+                position = new Vector2Int(leftSide ? -1 : 1, (int)zPos),
+                dimensions = layout.dimensions
+            });
+        }
+    }
+
+    void CreateAttic()
+    {
+        Bounds bounds = new Bounds();
+        foreach (var room in placedRooms)
+        {
+            if (room.gameObject.transform.parent == currentFloorParent.transform)
             {
-                if (roomType.isFirstFloorOnly)
+                bounds.Encapsulate(room.gameObject.GetComponent<Renderer>().bounds);
+            }
+        }
+        
+        float atticY = isFourFloors ? floorHeight * 2 + atticHeight/2 : floorHeight + atticHeight/2;
+        GameObject attic = Instantiate(
+            atticPrefab,
+            new Vector3(bounds.center.x, atticY, bounds.center.z),
+            Quaternion.identity
+        );
+        attic.transform.localScale = new Vector3(bounds.size.x, atticHeight, bounds.size.z);
+        
+        AddAtticEntrance();
+    }
+
+    void AddBasementEntrance()
+    {
+        if (placedRooms.Count == 0) return;
+        int randomIndex = Random.Range(0, placedRooms.Count);
+        // Implement your basement entrance logic here
+    }
+
+    void AddAtticEntrance()
+    {
+        List<RoomInstance> topFloorRooms = placedRooms.FindAll(
+            r => r.gameObject.transform.parent == currentFloorParent.transform
+        );
+        if (topFloorRooms.Count == 0) return;
+        int randomIndex = Random.Range(0, topFloorRooms.Count);
+        // Implement your attic entrance logic here
+    }
+
+    void ConnectAllRooms()
+    {
+        // Implement your door connection logic here
+        // Example pseudo-code:
+        foreach (var room in placedRooms)
+        {
+            Collider[] hitColliders = Physics.OverlapBox(
+                room.gameObject.transform.position,
+                new Vector3(room.dimensions.x/2, 1, room.dimensions.y/2)
+            );
+            
+            foreach (var hit in hitColliders)
+            {
+                if (hit.gameObject != room.gameObject)
                 {
-                    roomsForThisFloor.Add(roomType);
-                    availableRooms.Remove(roomType);
+                    // Place door between rooms
+                    Vector3 doorPos = (room.gameObject.transform.position + hit.transform.position) / 2;
+                    Instantiate(doorPrefab, doorPos, Quaternion.identity);
                 }
             }
         }
-
-        // Add remaining rooms
-        if (!distributeRooms || floorNum == 0)
-        {
-            roomsForThisFloor.AddRange(availableRooms);
-        }
-        else
-        {
-            int roomsToAdd = Mathf.Min(availableRooms.Count, Random.Range(2, 5));
-            for (int i = 0; i < roomsToAdd && availableRooms.Count > 0; i++)
-            {
-                int randomIndex = Random.Range(0, availableRooms.Count);
-                roomsForThisFloor.Add(availableRooms[randomIndex]);
-                availableRooms.RemoveAt(randomIndex);
-            }
-        }
-
-        // Spawn rooms with random variants
-        Vector3 spawnPos = new Vector3(0, floorNum * 3f, 0);
-        foreach (RoomType roomType in roomsForThisFloor)
-        {
-            GameObject variant = roomType.variants[Random.Range(0, roomType.variants.Length)];
-            GameObject newRoom = Instantiate(variant, spawnPos, Quaternion.identity);
-            allRooms.Add(newRoom);
-            spawnPos.x += roomSpacing;
-        }
-    }
-
-    void GenerateBasement()
-    {
-        Vector3 basementPos = new Vector3(0, -3f, 0);
-        foreach (GameObject room in allRooms)
-        {
-            if (room.transform.position.y == 0)
-            {
-                Instantiate(room, basementPos, Quaternion.identity);
-            }
-        }
-    }
-
-    void GenerateAttic()
-    {
-        float topFloorY = (maxFloors - 1) * 3f;
-        Vector3 atticPos = new Vector3(0, topFloorY + 3f, 0);
-        foreach (GameObject room in allRooms)
-        {
-            if (room.transform.position.y == topFloorY)
-            {
-                Instantiate(room, atticPos, Quaternion.identity);
-            }
-        }
-    }
-
-    void AddDoorsAndWindows()
-    {
-        foreach (GameObject room in allRooms)
-        {
-            foreach (Transform wall in room.transform)
-            {
-                if (wall.name.Contains("Wall"))
-                {
-                    if (IsWallTouchingAnotherRoom(wall))
-                    {
-                        Vector3 doorPos = wall.position + wall.forward * 0.1f;
-                        Instantiate(doorPrefab, doorPos, wall.rotation, wall);
-                    }
-                    else if (!room.name.Contains("Basement") && !room.name.Contains("Attic"))
-                    {
-                        Vector3 windowPos = wall.position + wall.forward * 0.1f;
-                        Instantiate(windowPrefab, windowPos, wall.rotation, wall);
-                    }
-                }
-            }
-        }
-    }
-
-    bool IsWallTouchingAnotherRoom(Transform wall)
-    {
-        RaycastHit hit;
-        if (Physics.Raycast(wall.position, wall.forward, out hit, 1f))
-        {
-            if (hit.transform.parent != null && hit.transform.parent != wall.parent)
-            {
-                return true;
-            }
-        }
-        return false;
     }
 }
