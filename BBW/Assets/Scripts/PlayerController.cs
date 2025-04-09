@@ -3,138 +3,187 @@ using Akila.FPSFramework;
 using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField]
-    private Rigidbody rb;
-    [SerializeField]
-    private float movespeed = 10;
-    [SerializeField]
+    [SerializeField] private Rigidbody rb;
+    [SerializeField] private float movespeed = 10;
     private Vector2 moveDir;
+
     [Header("Camera")]
-    [SerializeField]
-    public Transform playerCam;
-    [SerializeField]
-    public float sensitivity = 200;
-    [SerializeField]
-    public float maximumX = 90f;
-    [SerializeField]
-    public float minimumX = -90f;
-    public float xRotation = 0f;
-    [SerializeField]
-    public Vector3 camOffset = new Vector3(0, -0.2f, 0);
-    [SerializeField]
-    public bool lockCursor = true;
-    [SerializeField]
-    private InputActionAsset inputs;
+    [SerializeField] public Transform playerCam;
+    [SerializeField] public float sensitivity = 200;
+    [SerializeField] public float maximumX = 90f;
+    [SerializeField] public float minimumX = -90f;
+    private float xRotation = 0f;
+    [SerializeField] public bool lockCursor = true;
+
+    [Header("Interaction & Inventory")]
+    [SerializeField] private float interactRange = 3f;
+    [SerializeField] private LayerMask interactableLayer;
+    [SerializeField] private GameObject inventoryUI;
+
+    // Inventory slots
+    private InteractableItem[] inventorySlots = new InteractableItem[4];
+    // 0 = right hand, 1 = left hand, 2 = pocket1, 3 = pocket2
+
+    [Header("UI Slots")]
+    [SerializeField] private Image uiRightHand;
+    [SerializeField] private Image uiLeftHand;
+    [SerializeField] private Image uiPocket1;
+    [SerializeField] private Image uiPocket2;
+
+    [Header("Prompt UI")]
+    [SerializeField] private TMP_Text pickupPrompt;
+
+    [Header("Input Actions")]
+    [SerializeField] private InputActionAsset inputs;
     private InputAction moveAction;
     private InputAction lookAction;
     private InputAction interactAction;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Awake()
+    private InputAction inventoryAction;
+
+    private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        var playerActionMap = inputs.FindActionMap("Player");
-        interactAction = playerActionMap.FindAction("Interact");
-        moveAction = playerActionMap.FindAction("Move");
-        lookAction = playerActionMap.FindAction("Look");
-        //moveAction = inputs.FindAction("Interact");
 
+        var map = inputs.FindActionMap("Player");
+        moveAction      = map.FindAction("Move");
+        lookAction      = map.FindAction("Look");
+        interactAction  = map.FindAction("Interact");
+        inventoryAction = map.FindAction("Inventory");
+
+        moveAction.Enable();
+        lookAction.Enable();
+        interactAction.Enable();
+        inventoryAction.Enable();
+
+        inventoryAction.performed += ctx => ToggleInventoryUI();
     }
 
-    void Start()
+    private void Start()
     {
-        // Debug.Log("Move action: " + (moveAction != null));
-        // Debug.Log("Look action: " + (lookAction != null));
-        // Debug.Log("Input Action Asset: " + inputs.name);
-        
+        inventoryUI.SetActive(false);
+        pickupPrompt.gameObject.SetActive(false);
+        RefreshUI();
     }
 
     private void OnEnable()
     {
-        interactAction.Enable();
         moveAction.Enable();
         lookAction.Enable();
-    }
-    private void OnDisable()
-    {
-        interactAction.Disable();
-        moveAction.Disable();
-        lookAction.Disable();
+        interactAction.Enable();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnDisable()
+    {
+        moveAction.Disable();
+        lookAction.Disable();
+        interactAction.Disable();
+    }
+
+    private void Update()
     {
         if (lockCursor)
         {
-            Cursor.lockState = CursorLockMode.Locked; // Locks cursor to center
-            Cursor.visible = false; // Hides the cursor
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible   = false;
         }
-        Interact();
+
+        HandleInteract();
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
         Look();
         Move();
-           
     }
 
-    private void Interact()
+    // ——— Interaction & Pickup ———
+    private void HandleInteract()
     {
-        // Debug.Log("press "+interactAction.IsPressed()); // for holding
-        // Debug.Log("triger" + interactAction.triggered); // use this
-        // if (interactAction.triggered)
-        // {
-        //     Debug.Break();
-        // }
-        
+        Ray ray = new Ray(playerCam.position, playerCam.forward);
+        if (Physics.Raycast(ray, out RaycastHit hit, interactRange, interactableLayer))
+        {
+            var itemComp = hit.collider.GetComponent<InteractableItem>();
+            if (itemComp != null)
+            {
+                pickupPrompt.gameObject.SetActive(true);
+                pickupPrompt.text = $"Press E to pick up {itemComp.itemName}";
+
+                if (interactAction.triggered)
+                {
+                    AddToInventory(itemComp);
+                    pickupPrompt.gameObject.SetActive(false);
+                }
+                return;
+            }
+        }
+
+        pickupPrompt.gameObject.SetActive(false);
+    }
+
+    // ——— Inventory Methods ———
+    private void ToggleInventoryUI()
+    {
+        inventoryUI.SetActive(!inventoryUI.activeSelf);
+    }
+
+    private void AddToInventory(InteractableItem item)
+    {
+        // Find first empty slot
+        for (int i = 0; i < inventorySlots.Length; i++)
+        {
+            if (inventorySlots[i] == null)
+            {
+                inventorySlots[i] = item;
+                item.gameObject.SetActive(false); // hide in world
+                RefreshUI();
+                return;
+            }
+        }
+        // Inventory full: you could show a “full” message here
+    }
+
+    private void RefreshUI()
+    {
+        // Right Hand (slot 0)
+        uiRightHand.sprite = inventorySlots[0] != null ? inventorySlots[0].icon : null;
+        uiRightHand.enabled = inventorySlots[0] != null;
+
+        // Left Hand (slot 1)
+        uiLeftHand.sprite = inventorySlots[1] != null ? inventorySlots[1].icon : null;
+        uiLeftHand.enabled = inventorySlots[1] != null;
+
+        // Pocket1 (slot 2)
+        uiPocket1.sprite = inventorySlots[2] != null ? inventorySlots[2].icon : null;
+        uiPocket1.enabled = inventorySlots[2] != null;
+
+        // Pocket2 (slot 3)
+        uiPocket2.sprite = inventorySlots[3] != null ? inventorySlots[3].icon : null;
+        uiPocket2.enabled = inventorySlots[3] != null;
     }
 
     private void Look()
     {
-        Debug.Log("look delta: " + lookAction.ReadValue<Vector2>());
-        // Get mouse/joystick input
         Vector2 lookDelta = lookAction.ReadValue<Vector2>() * sensitivity * Time.deltaTime;
+        transform.Rotate(Vector3.up * lookDelta.x);
 
-        // Horizontal (Yaw) rotation (rotates the player left/right)
-        float yaw = lookDelta.x;
-        transform.Rotate(Vector3.up * yaw);
-
-        // Vertical (Pitch) rotation (rotates the camera up/down)
-        xRotation -= lookDelta.y; // Subtract for inverted controls (like most FPS games)
-        xRotation = Mathf.Clamp(xRotation, minimumX, maximumX); // Clamp to prevent over-rotation
-
-        // Apply rotation to the camera
+        xRotation -= lookDelta.y;
+        xRotation = Mathf.Clamp(xRotation, minimumX, maximumX);
         playerCam.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
-        
     }
-    
+
     private void Move()
     {
-        // moveDir = moveAction.ReadValue<Vector2>();
-        // //Debug.Log("Movement Input: " + moveAction.ReadValue<Vector2>());
-        
-        // // Convert 2D input to 3D movement (ignoring vertical movement)
-        // Vector3 movement = new Vector3(moveDir.y, 0, moveDir.x) * movespeed;
-        // rb.linearVelocity = movement;
-
         moveDir = moveAction.ReadValue<Vector2>();
-    
-        // Get forward and right vectors relative to player's rotation
-        Vector3 forward = transform.forward; // Z-axis (where player is looking)
-        Vector3 right = transform.right;     // X-axis (player's right side)
-        
-        // Combine movement direction with orientation
+        Vector3 forward = transform.forward;
+        Vector3 right   = transform.right;
         Vector3 movement = (forward * moveDir.y + right * moveDir.x) * movespeed;
-        
-        // Keep y-velocity from physics (like gravity)
         movement.y = rb.linearVelocity.y;
-        
         rb.linearVelocity = movement;
     }
-
 }
