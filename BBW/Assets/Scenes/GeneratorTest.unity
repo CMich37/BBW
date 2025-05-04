@@ -345,8 +345,7 @@ MonoBehaviour:
   basementPrefab: {fileID: 6512803705519864772, guid: c2aab63108fe6434d98b26159388c4de,
     type: 3}
   atticPrefab: {fileID: 0}
-  hallwayPrefab: {fileID: 4578130402101013743, guid: 0822ee503c832495aab24be01e924284,
-    type: 3}
+  hallwayPrefab: {fileID: 0}
   doorPrefab: {fileID: 0}
   foyer: {fileID: 11400000, guid: 47a7261402a8e4631815b04fe24409f4, type: 2}
   kitchen: {fileID: 11400000, guid: 0ec6ee76c0cbd4070a25ecf0bc382ba2, type: 2}
