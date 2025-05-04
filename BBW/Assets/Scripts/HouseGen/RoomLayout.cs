@@ -1,7 +1,8 @@
 using UnityEngine;
 
 [System.Serializable]
-public class RoomLayout
+[CreateAssetMenu(fileName = "RoomLayoutSO", menuName = "Scriptable Objects/RoomLayoutSO")]
+public class RoomLayout : ScriptableObject
 {
     public GameObject prefab;
     public Vector2Int dimensions; // Width x Length in Unity units
