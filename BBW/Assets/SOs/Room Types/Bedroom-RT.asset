@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Bedroom-RT
   m_EditorClassIdentifier: 
   roomName: Bedroom
-  layouts: []
+  layouts:
+  - {fileID: 11400000, guid: ced0039098514402aa8ec97c99c40d5e, type: 2}
   mustBeOnFirstFloor: 0

@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Kitchen-RT
   m_EditorClassIdentifier: 
   roomName: Kitchen
-  layouts: []
+  layouts:
+  - {fileID: 11400000, guid: 28e7d09a498fe48c99e182850581fd39, type: 2}
   mustBeOnFirstFloor: 1

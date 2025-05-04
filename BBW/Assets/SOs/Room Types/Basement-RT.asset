@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Basement-RT
   m_EditorClassIdentifier: 
   roomName: Basement
-  layouts: []
+  layouts:
+  - {fileID: 11400000, guid: 7b3ee1c1d2e36404dada15bd8a2d11ef, type: 2}
   mustBeOnFirstFloor: 0
