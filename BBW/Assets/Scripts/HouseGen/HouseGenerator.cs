@@ -12,11 +12,17 @@ public class HouseGenerator : MonoBehaviour
     public float hallwayWidth = 10f;
     public float roomSpacing = 5f;
 
+    public float tileSize = 1f;
+
+    private Dictionary<int, List<Bounds>> occupiedBoundsPerFloor = new Dictionary<int, List<Bounds>>();
+
+
     [Header("Prefabs")]
     public GameObject basementPrefab;
     public GameObject atticPrefab;
     public GameObject hallwayPrefab;
     public GameObject doorPrefab;
+    
 
     [Header("Room Types")]
     public RoomTypeSO foyer;
@@ -29,7 +35,7 @@ public class HouseGenerator : MonoBehaviour
     private GameObject currentFloorParent;
     private Vector2Int currentGridPosition = Vector2Int.zero;
     private HashSet<Vector2Int> occupiedGridPositions = new HashSet<Vector2Int>();
-    private Vector3 foyerPosition = Vector3Int.zero;
+    private Vector2 foyerPosition = Vector2Int.zero;
 
 
     private class RoomInstance
@@ -48,7 +54,8 @@ public class HouseGenerator : MonoBehaviour
 
     void GenerateHouse()
     {
-        isFourFloors = Random.Range(0, 2) == 1;
+        // isFourFloors = Random.Range(0, 2) == 1;
+        isFourFloors = true;
         Debug.Log("is4f" + isFourFloors);
         CreateBasement();
         CreateFirstFloor();
@@ -84,11 +91,12 @@ public class HouseGenerator : MonoBehaviour
 
             // Place it (pass `isFourFloors` only for the foyer)
             PlaceRoom(room, room == foyer ? isFourFloors : false);
-            Debug.Log("placed" + room);
+            // Debug.Log("placed" + room);
 
             // Remove it from the list so it doesn't get picked again
             mandatoryRooms.RemoveAt(randomIndex);
         }
+        // Debug.Log("foypos == "+foyerPosition);
 
         // Place optional rooms
         int roomsToPlace = isFourFloors ? Mathf.Max(0, otherRooms.Length - 1) : otherRooms.Length;
@@ -102,31 +110,88 @@ public class HouseGenerator : MonoBehaviour
         AddBasementEntrance();
     }
 
+    // void PlaceRoom(RoomTypeSO roomType, bool needsStairs = false)
+    // {
+    //     RoomLayout layout = GetRandomLayout(roomType, needsStairs);
+
+    //     // Calculate prefab bounds
+    //     Bounds visualBounds = CalculateRoomBounds(layout.prefab);
+    //     Vector3 size = visualBounds.size;
+
+    //     // Convert to grid units
+    //     int widthInTiles = Mathf.CeilToInt(visualBounds.size.x / tileSize);
+    //     int depthInTiles = Mathf.CeilToInt(visualBounds.size.z / tileSize);
+    //     Vector2Int calculatedSize = new Vector2Int(widthInTiles, depthInTiles);
+
+    //     // Get a valid grid position
+    //     Vector2Int position = CalculateNextRoomPosition(calculatedSize);
+
+    //     // Instantiate the prefab
+    //     GameObject roomObj = Instantiate(
+    //         layout.prefab,
+    //         new Vector3(position.x * tileSize, currentFloorParent.transform.position.y, position.y * tileSize),
+    //         Quaternion.identity,
+    //         currentFloorParent.transform
+    //     );
+
+    //     // Reserve occupied tiles
+    //     for (int x = 0; x < calculatedSize.x; x++)
+    //     {
+    //         for (int y = 0; y < calculatedSize.y; y++)
+    //         {
+    //             occupiedGridPositions.Add(position + new Vector2Int(x, y));
+    //         }
+    //     }
+
+    //     // Register placed room
+    //     placedRooms.Add(new RoomInstance {
+    //         gameObject = roomObj,
+    //         type = roomType,
+    //         gridPosition = position,
+    //         dimensions = calculatedSize,
+    //         floorLevel = isFourFloors ? (currentFloorParent.name == "First Floor" ? 0 : 1) : 0
+    //     });
+
+    //     // Log for debugging
+    //     if (roomType.roomName == "Foyer")
+    //     {
+    //         foyerPosition = position;
+    //     }
+    //     Debug.Log($"Placing {roomType.roomName} at {position} | Grid size: {calculatedSize} | Visual bounds: {visualBounds.size}");
+    // }
     void PlaceRoom(RoomTypeSO roomType, bool needsStairs = false)
     {
         RoomLayout layout = GetRandomLayout(roomType, needsStairs);
 
-        // Calculate prefab bounds
+        // 1. Calculate the visual bounds of the prefab (not an instance)
         Bounds visualBounds = CalculateRoomBounds(layout.prefab);
         Vector3 size = visualBounds.size;
 
-        // Convert to grid units
-        int widthInTiles = Mathf.CeilToInt(size.x / roomSpacing);
-        int depthInTiles = Mathf.CeilToInt(size.z / roomSpacing);
-        Vector2Int calculatedSize = new Vector2Int(widthInTiles, depthInTiles);
+        // 2. Convert bounds into tile counts (floored to avoid overclaiming)
+        Vector2Int calculatedSize = new Vector2Int(
+            Mathf.CeilToInt(size.x),
+            Mathf.CeilToInt(size.z)
+        );
 
-        // Get a valid grid position
+        // 3. Get a valid grid position
         Vector2Int position = CalculateNextRoomPosition(calculatedSize);
 
-        // Instantiate the prefab
+        // 4. Calculate actual world position using real prefab size (no tileSize)
+        Vector3 worldPosition = new Vector3(
+            position.x * size.x,
+            currentFloorParent.transform.position.y,
+            position.y * size.z
+        );
+
+        // 5. Instantiate room at exact world location
         GameObject roomObj = Instantiate(
             layout.prefab,
-            new Vector3(position.x * roomSpacing, currentFloorParent.transform.position.y, position.y * roomSpacing),
+            worldPosition,
             Quaternion.identity,
             currentFloorParent.transform
         );
 
-        // Reserve occupied tiles
+        // 6. Reserve all occupied grid tiles
         for (int x = 0; x < calculatedSize.x; x++)
         {
             for (int y = 0; y < calculatedSize.y; y++)
@@ -135,7 +200,7 @@ public class HouseGenerator : MonoBehaviour
             }
         }
 
-        // Register placed room
+        // 7. Track the placed room
         placedRooms.Add(new RoomInstance {
             gameObject = roomObj,
             type = roomType,
@@ -144,9 +209,14 @@ public class HouseGenerator : MonoBehaviour
             floorLevel = isFourFloors ? (currentFloorParent.name == "First Floor" ? 0 : 1) : 0
         });
 
-        // Log for debugging
+        if (roomType.roomName == "Foyer")
+        {
+            foyerPosition = position;
+        }
+
         Debug.Log($"Placing {roomType.roomName} at {position} | Grid size: {calculatedSize} | Visual bounds: {visualBounds.size}");
     }
+
 
 
 
@@ -182,7 +252,8 @@ public class HouseGenerator : MonoBehaviour
             foreach (Vector2Int dir in directions)
             {
                 // Apply spacing offset
-                Vector2Int candidate = basePos + dir * (roomSize + Vector2Int.one);
+                Vector2Int candidate = basePos + dir * roomSize;
+
 
                 // Check each tile the new room would occupy
                 bool overlap = false;
@@ -217,39 +288,147 @@ public class HouseGenerator : MonoBehaviour
         return candidatePositions[Random.Range(0, candidatePositions.Count)];
     }
 
+    // void CreateSecondFloor()
+    // {
+    //     currentFloorParent = new GameObject("Second Floor");
+    //     currentFloorParent.transform.position = Vector3.up * floorHeight;
+
+    //     // Calculate how many rooms should be on second floor
+    //     int roomsOnFirstFloor = placedRooms.Count(r => r.floorLevel == 0);
+    //     int roomsForSecondFloor = otherRooms.Length - (roomsOnFirstFloor - 3); // minus mandatory rooms
+
+    //     // Create central hallway
+    //     float hallwayLength = (roomsForSecondFloor + 1) * roomSpacing;
+    //     GameObject hallway = Instantiate(
+    //         hallwayPrefab,
+    //         foyerPosition,
+    //         Quaternion.identity,
+    //         currentFloorParent.transform
+    //     );
+    //     hallway.transform.localScale = new Vector3(hallwayWidth, 1, hallwayLength);
+
+    //     // Place rooms along the hallway
+    //     for (int i = 0; i < roomsForSecondFloor; i++)
+    //     {
+    //         RoomTypeSO roomType = otherRooms[roomsOnFirstFloor - 3 + i]; // Skip mandatory rooms
+    //         RoomLayout layout = GetRandomLayout(roomType, false);
+
+    //         bool leftSide = i % 2 == 0;
+    //         float zPos = i * roomSpacing + roomSpacing/2f;
+
+    //         Vector3 position = new Vector3(
+    //             leftSide ? -(hallwayWidth/2 + layout.dimensions.x/2) : (hallwayWidth/2 + layout.dimensions.x/2),
+    //             floorHeight,
+    //             zPos
+    //         );
+
+    //         GameObject roomObj = Instantiate(
+    //             layout.prefab,
+    //             position,
+    //             Quaternion.identity,
+    //             currentFloorParent.transform
+    //         );
+
+    //         placedRooms.Add(new RoomInstance {
+    //             gameObject = roomObj,
+    //             type = roomType,
+    //             gridPosition = new Vector2Int((int)position.x, (int)position.z),
+    //             dimensions = layout.dimensions,
+    //             floorLevel = 1
+    //         });
+    //     }
+    // }
+    
     void CreateSecondFloor()
     {
         currentFloorParent = new GameObject("Second Floor");
         currentFloorParent.transform.position = Vector3.up * floorHeight;
 
-        // Calculate how many rooms should be on second floor
+        // Determine rooms for the second floor
+        List<RoomTypeSO> secondFloorRooms = new List<RoomTypeSO>();
         int roomsOnFirstFloor = placedRooms.Count(r => r.floorLevel == 0);
-        int roomsForSecondFloor = otherRooms.Length - (roomsOnFirstFloor - 3); // minus mandatory rooms
+        int roomsForSecondFloor = otherRooms.Length - (roomsOnFirstFloor - 3); // Assuming 3 mandatory rooms
 
-        // Create central hallway
-        float hallwayLength = (roomsForSecondFloor + 1) * roomSpacing;
+        for (int i = 0; i < roomsForSecondFloor; i++)
+        {
+            int index = roomsOnFirstFloor - 3 + i;
+            if (index < otherRooms.Length)
+                secondFloorRooms.Add(otherRooms[index]);
+        }
+
+        // Collect layouts, depths, and widths
+        List<RoomLayout> layouts = new List<RoomLayout>();
+        List<float> depths = new List<float>();
+        List<float> widths = new List<float>();
+        List<bool> isLeftList = new List<bool>();
+
+        float leftTotalDepth = 0f;
+        float rightTotalDepth = 0f;
+
+        foreach (RoomTypeSO roomType in secondFloorRooms)
+        {
+            RoomLayout layout = GetRandomLayout(roomType, false);
+            Bounds bounds = CalculateRoomBounds(layout.prefab);
+            float depth = bounds.size.z;
+            float width = bounds.size.x;
+
+            layouts.Add(layout);
+            depths.Add(depth);
+            widths.Add(width);
+
+            // Alternate starting with left
+            bool isLeft = (layouts.Count % 2 == 1);
+            isLeftList.Add(isLeft);
+
+            if (isLeft)
+                leftTotalDepth += depth;
+            else
+                rightTotalDepth += depth;
+        }
+
+        // Calculate hallway length based on the larger side
+        float hallwayLength = Mathf.Max(leftTotalDepth, rightTotalDepth);
+
+        // Create the hallway centered above the foyer's position
         GameObject hallway = Instantiate(
             hallwayPrefab,
-            new Vector3(0, floorHeight, hallwayLength/2f),
+            new Vector3(foyerPosition.x * tileSize, floorHeight, foyerPosition.y * tileSize + hallwayLength / 2),
             Quaternion.identity,
             currentFloorParent.transform
         );
         hallway.transform.localScale = new Vector3(hallwayWidth, 1, hallwayLength);
 
         // Place rooms along the hallway
-        for (int i = 0; i < roomsForSecondFloor; i++)
+        float currentLeftZ = 0f;
+        float currentRightZ = 0f;
+
+        for (int i = 0; i < layouts.Count; i++)
         {
-            RoomTypeSO roomType = otherRooms[roomsOnFirstFloor - 3 + i]; // Skip mandatory rooms
-            RoomLayout layout = GetRandomLayout(roomType, false);
+            RoomLayout layout = layouts[i];
+            float depth = depths[i];
+            float width = widths[i];
+            bool isLeft = isLeftList[i];
 
-            bool leftSide = i % 2 == 0;
-            float zPos = i * roomSpacing + roomSpacing/2f;
+            Vector3 position;
 
-            Vector3 position = new Vector3(
-                leftSide ? -(hallwayWidth/2 + layout.dimensions.x/2) : (hallwayWidth/2 + layout.dimensions.x/2),
-                floorHeight,
-                zPos
-            );
+            if (isLeft)
+            {
+                position = new Vector3(
+                    (foyerPosition.x * tileSize) - (hallwayWidth / 2 + width / 2),
+                    floorHeight,
+                    (foyerPosition.y * tileSize) + currentLeftZ + depth / 2
+                );
+                currentLeftZ += depth;
+            }
+            else
+            {
+                position = new Vector3(
+                    (foyerPosition.x * tileSize) + (hallwayWidth / 2 + width / 2),
+                    floorHeight,
+                    (foyerPosition.y * tileSize) + currentRightZ + depth / 2
+                );
+                currentRightZ += depth;
+            }
 
             GameObject roomObj = Instantiate(
                 layout.prefab,
@@ -258,16 +437,22 @@ public class HouseGenerator : MonoBehaviour
                 currentFloorParent.transform
             );
 
-            placedRooms.Add(new RoomInstance {
+            placedRooms.Add(new RoomInstance
+            {
                 gameObject = roomObj,
-                type = roomType,
-                gridPosition = new Vector2Int((int)position.x, (int)position.z),
-                dimensions = layout.dimensions,
+                type = secondFloorRooms[i],
+                gridPosition = new Vector2Int(
+                    Mathf.FloorToInt(position.x / tileSize),
+                    Mathf.FloorToInt(position.z / tileSize)
+                ),
+                dimensions = new Vector2Int(
+                    Mathf.CeilToInt(width / tileSize),
+                    Mathf.CeilToInt(depth / tileSize)
+                ),
                 floorLevel = 1
             });
         }
     }
-    
 
     void CreateAttic()
     {
@@ -482,7 +667,7 @@ public class HouseGenerator : MonoBehaviour
         Gizmos.color = Color.yellow;
         foreach (var tile in occupiedGridPositions)
         {
-            Vector3 pos = new Vector3(tile.x * roomSpacing, 0.1f, tile.y * roomSpacing);
+            Vector3 pos = new Vector3(tile.x * tileSize, 0.1f, tile.y * tileSize);
             Gizmos.DrawCube(pos, Vector3.one * 0.5f);
         }
 
