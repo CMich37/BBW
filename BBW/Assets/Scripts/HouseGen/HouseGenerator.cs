@@ -177,11 +177,13 @@ public class HouseGenerator : MonoBehaviour
         Vector2Int position = CalculateNextRoomPosition(calculatedSize);
 
         // 4. Calculate actual world position using real prefab size (no tileSize)
+        Vector3 roomWorldSize = GetRoomWorldSize(layout.prefab); // NEW FUNCTION
         Vector3 worldPosition = new Vector3(
-            position.x * size.x,
+            position.x * roomWorldSize.x,
             currentFloorParent.transform.position.y,
-            position.y * size.z
+            position.y * roomWorldSize.z
         );
+
 
         // 5. Instantiate room at exact world location
         GameObject roomObj = Instantiate(
@@ -217,8 +219,18 @@ public class HouseGenerator : MonoBehaviour
         Debug.Log($"Placing {roomType.roomName} at {position} | Grid size: {calculatedSize} | Visual bounds: {visualBounds.size}");
     }
 
+    Vector3 GetRoomWorldSize(GameObject prefab)
+    {
+        Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0)
+            return new Vector3(5f, 3f, 5f); // default size
 
+        Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++)
+            bounds.Encapsulate(renderers[i].bounds);
 
+        return bounds.size;
+    }
 
     Vector2Int CalculateNextRoomPosition(Vector2Int dimensions)
     {
@@ -667,8 +679,8 @@ public class HouseGenerator : MonoBehaviour
         Gizmos.color = Color.yellow;
         foreach (var tile in occupiedGridPositions)
         {
-            Vector3 pos = new Vector3(tile.x * tileSize, 0.1f, tile.y * tileSize);
-            Gizmos.DrawCube(pos, Vector3.one * 0.5f);
+            Vector3 pos = new Vector3(tile.x , 0.1f, tile.y);
+            Gizmos.DrawCube(pos, Vector3.one);
         }
 
         
