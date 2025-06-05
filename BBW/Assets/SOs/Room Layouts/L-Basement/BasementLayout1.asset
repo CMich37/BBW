@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: BasementLayout1
   m_EditorClassIdentifier: 
   prefab: {fileID: 6512803705519864772, guid: c2aab63108fe6434d98b26159388c4de, type: 3}
-  dimensions: {x: 0, y: 0}
+  dimensions: {x: 5, y: 5}
   hasStairs: 0

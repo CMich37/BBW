@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: BathroomLayout1
   m_EditorClassIdentifier: 
   prefab: {fileID: 7623041527057163383, guid: 82b09eec67120bf4c8b50653ade2f5ba, type: 3}
-  dimensions: {x: 0, y: 0}
+  dimensions: {x: 25, y: 0}
   hasStairs: 0
