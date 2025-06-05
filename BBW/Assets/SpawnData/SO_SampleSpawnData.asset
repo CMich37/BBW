@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17d73c9aa2c88654bbaa9510cdacf7a4, type: 3}
+  m_Name: SO_SampleSpawnData
+  m_EditorClassIdentifier: 
+  overallSpawnChance: 1
+  itemPrefabs:
+  - {fileID: 4663114177116202490, guid: 3faa669cb80455548924ba322fa8e119, type: 3}
+  - {fileID: 1919018370563589875, guid: 62cad62a3a6bf1e408c50f3f3c34ab29, type: 3}
+  - {fileID: 810690863368926723, guid: f40d328f8b37cac46ab2d51c43bd869d, type: 3}
+  weights:
+  - 2
+  - 1
+  - 3
+  localSpawnOffsets:
+  - {x: 0, y: 0.5, z: 0}
+  - {x: -0.3, y: 0.5, z: 0.2}
+  - {x: 0.3, y: 0.5, z: -0.2}
