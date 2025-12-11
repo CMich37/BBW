@@ -377,6 +377,73 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!1 &986079389
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 986079391}
+  - component: {fileID: 986079390}
+  m_Layer: 0
+  m_Name: HouseGenerator2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &986079390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 986079389}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc3f2d5be3eeb504dbd6bb3e1099b57e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  useFourFloors: 1
+  basementHeight: 3
+  floorHeight: 3
+  atticHeight: 2.5
+  tileSize: 2.5
+  tileGapBetweenRooms: 0
+  basementPrefab: {fileID: 6512803705519864772, guid: c2aab63108fe6434d98b26159388c4de,
+    type: 3}
+  atticPrefab: {fileID: 3355770862152531564, guid: c56f545f9c955458a8f2d1ab507676ed,
+    type: 3}
+  floorTilePrefab: {fileID: 2130234204341472930, guid: 7dcf608f1c1348443b81d8440de96d0a,
+    type: 3}
+  floorYOffset: -0.01
+  foyer: {fileID: 11400000, guid: 47a7261402a8e4631815b04fe24409f4, type: 2}
+  kitchen: {fileID: 11400000, guid: 0ec6ee76c0cbd4070a25ecf0bc382ba2, type: 2}
+  livingRoom: {fileID: 11400000, guid: f661d024fa3f84490b07826f55ef26ac, type: 2}
+  otherRooms:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  bedroom: {fileID: 11400000, guid: febe062e203c940b4931c7917805862d, type: 2}
+  bathroom: {fileID: 11400000, guid: bc308946d4ae847efb9b3b4b96793d40, type: 2}
+--- !u!4 &986079391
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 986079389}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.221414, y: -1.0243442, z: 6.659151}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1600384364
 GameObject:
   m_ObjectHideFlags: 0
@@ -450,7 +517,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1722251713}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f8ac1a7658d2f4a7495c04ceae021d13, type: 3}
   m_Name: 
@@ -497,3 +564,4 @@ SceneRoots:
   - {fileID: 3172629}
   - {fileID: 1722251715}
   - {fileID: 1600384366}
+  - {fileID: 986079391}
