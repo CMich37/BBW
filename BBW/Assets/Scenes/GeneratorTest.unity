@@ -478,6 +478,11 @@ MonoBehaviour:
   - {fileID: 6512803705519864772, guid: c2aab63108fe6434d98b26159388c4de, type: 3}
   - {fileID: 1529213026765656576, guid: d42a99ebffe7e7943b95e7ad49d217a5, type: 3}
   - {fileID: 5715039141753147380, guid: 15cb75b37e287634da2d89763b15429d, type: 3}
+  - {fileID: 456393176440548150, guid: aeb75a5b1e86a4b03b6d0c62878b6a1d, type: 3}
+  - {fileID: 4578130402101013743, guid: 0822ee503c832495aab24be01e924284, type: 3}
+  - {fileID: 6686262644591952718, guid: 58a2e6982c54943518e15bbc916dae4e, type: 3}
+  - {fileID: 6686262644591952718, guid: 58a2e6982c54943518e15bbc916dae4e, type: 3}
+  - {fileID: 5653585001117300136, guid: 0845f747c635c422da5cfab5e1c868bf, type: 3}
 --- !u!4 &1600384366
 Transform:
   m_ObjectHideFlags: 0
@@ -527,7 +532,6 @@ MonoBehaviour:
   floorHeight: 3
   hallwayWidth: 10
   roomSpacing: 0
-  tileSize: 2.5
   basementPrefab: {fileID: 6512803705519864772, guid: c2aab63108fe6434d98b26159388c4de,
     type: 3}
   atticPrefab: {fileID: 3355770862152531564, guid: c56f545f9c955458a8f2d1ab507676ed,
@@ -541,6 +545,8 @@ MonoBehaviour:
   otherRooms:
   - {fileID: 11400000, guid: bc308946d4ae847efb9b3b4b96793d40, type: 2}
   - {fileID: 11400000, guid: febe062e203c940b4931c7917805862d, type: 2}
+  branchOutProbability: 0
+  debugLogging: 1
 --- !u!4 &1722251715
 Transform:
   m_ObjectHideFlags: 0

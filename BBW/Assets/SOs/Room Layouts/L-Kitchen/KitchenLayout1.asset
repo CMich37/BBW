@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: KitchenLayout1
   m_EditorClassIdentifier: 
   prefab: {fileID: 5653585001117300136, guid: 0845f747c635c422da5cfab5e1c868bf, type: 3}
-  dimensions: {x: 0, y: 0}
+  dimensions: {x: 6.25, y: 5.05}
   hasStairs: 0

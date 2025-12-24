@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: FoyerLayoutNS1
   m_EditorClassIdentifier: 
   prefab: {fileID: 4578130402101013743, guid: 0822ee503c832495aab24be01e924284, type: 3}
-  dimensions: {x: 0, y: 0}
+  dimensions: {x: 11.53, y: 6.63}
   hasStairs: 0

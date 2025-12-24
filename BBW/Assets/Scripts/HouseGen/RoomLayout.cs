@@ -5,6 +5,6 @@ using UnityEngine;
 public class RoomLayout : ScriptableObject
 {
     public GameObject prefab;
-    public Vector2Int dimensions; // Width x Length in Unity units
+    public Vector2 dimensions; // Width x Length in Unity units
     public bool hasStairs; // Only used for foyer variants
 }
