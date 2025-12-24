@@ -112,7 +112,7 @@ public class HouseGenerator : MonoBehaviour
             else if (numSecondaryRooms == 1)
             {
                 // Place 1 secondary room - pick random one from otherRooms
-                int randomIndex = Random.Range(0, otherRooms.Length + 1);
+                int randomIndex = Random.Range(0, otherRooms.Length);
                 PlaceRoom(1, otherRooms[randomIndex], false, false);
                 Debug.Log($"Placed 1 secondary room on floor 1: {otherRooms[randomIndex].roomName}");
             }

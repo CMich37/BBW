@@ -476,10 +476,10 @@ MonoBehaviour:
   kitchen: {fileID: 11400000, guid: 0ec6ee76c0cbd4070a25ecf0bc382ba2, type: 2}
   livingRoom: {fileID: 11400000, guid: f661d024fa3f84490b07826f55ef26ac, type: 2}
   otherRooms:
-  - {fileID: 11400000, guid: bc308946d4ae847efb9b3b4b96793d40, type: 2}
   - {fileID: 11400000, guid: febe062e203c940b4931c7917805862d, type: 2}
-  branchOutProbability: 0
-  debugLogging: 1
+  - {fileID: 11400000, guid: bc308946d4ae847efb9b3b4b96793d40, type: 2}
+  branchOutProbability: 0.479
+  debugLogging: 0
 --- !u!4 &1722251715
 Transform:
   m_ObjectHideFlags: 0
