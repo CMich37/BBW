@@ -108,8 +108,8 @@ public class HouseGenerator : MonoBehaviour
 
         // Get dimensions from the prefab's renderers
         Bounds prefabBounds = GetChildRendererBounds(selectedLayout.prefab);
-        // Vector2 roomDimensions = new Vector2(Mathf.Abs(prefabBounds.size.x), Mathf.Abs(prefabBounds.size.z));
-        Vector2 roomDimensions = new Vector2(Mathf.Abs(selectedLayout.dimensions.x), Mathf.Abs(selectedLayout.dimensions.y));
+        Vector2 roomDimensions = new Vector2(Mathf.Abs(prefabBounds.size.x), Mathf.Abs(prefabBounds.size.z));
+        // Vector2 roomDimensions = new Vector2(Mathf.Abs(selectedLayout.dimensions.x), Mathf.Abs(selectedLayout.dimensions.y));
 
         if (debugLogging)
         {
@@ -354,87 +354,6 @@ public class HouseGenerator : MonoBehaviour
     /// Gets the combined bounds of all child renderers on a prefab.
     /// Used to calculate room dimensions when the parent has no renderer.
     /// </summary>
-    // Bounds GetChildRendererBounds(GameObject go)
-    // {
-    //     Renderer[] renderers = go.GetComponentsInChildren<Renderer>();
-
-    //     if (renderers.Length > 0)
-    //     {
-    //         Bounds bounds = renderers[0].bounds;
-    //         for (int i = 1; i < renderers.Length; i++)
-    //         {
-    //             bounds.Encapsulate(renderers[i].bounds);
-    //         }
-    //         return bounds;
-    //     }
-    //     else
-    //     {
-    //         Debug.LogWarning($"No renderers found on {go.name} or its children");
-    //         return new Bounds();
-    //     }
-
-    //     // Collider[] colliders = go.GetComponentsInChildren<MeshCollider>();
-
-    //     // if (colliders.Length > 0)
-    //     // {
-    //     //     Bounds bounds = colliders[0].bounds;
-    //     //     for (int i = 1; i < colliders.Length; i++)
-    //     //     {
-    //     //         bounds.Encapsulate(colliders[i].bounds);
-    //     //     }
-    //     //     return bounds;
-    //     // }
-    //     // else
-    //     // {
-    //     //     Debug.LogWarning($"No renderers found on {go.name} or its children");
-    //     //     return new Bounds();
-    //     // }
-
-
-    // }
-
-    // Bounds GetChildRendererBounds(GameObject go)
-    // {
-    //     Renderer[] renderers = go.GetComponentsInChildren<Renderer>();
-
-    //     if (debugLogging)
-    //     {
-    //         Debug.Log($"[GetChildRendererBounds] {go.name} - Found {renderers.Length} renderers");
-    //     }
-
-    //     if (renderers.Length > 0)
-    //     {
-    //         Bounds bounds = renderers[0].bounds;
-
-    //         if (debugLogging)
-    //         {
-    //             Debug.Log($"  [0] {renderers[0].gameObject.name}: Center={bounds.center}, Size={bounds.size}, Extents={bounds.extents}");
-    //         }
-
-    //         for (int i = 1; i < renderers.Length; i++)
-    //         {
-    //             Debug.Log($"  Before encapsulating [{i}]: Center={bounds.center}, Size={bounds.size}");
-    //             Debug.Log($"  [{i}] {renderers[i].gameObject.name}: Center={renderers[i].bounds.center}, Size={renderers[i].bounds.size}");
-
-    //             bounds.Encapsulate(renderers[i].bounds);
-
-    //             Debug.Log($"  After encapsulating [{i}]: Center={bounds.center}, Size={bounds.size}");
-    //         }
-
-    //         if (debugLogging)
-    //         {
-    //             Debug.Log($"[GetChildRendererBounds] FINAL {go.name}: Center={bounds.center}, Size={bounds.size}, Extents={bounds.extents}");
-    //         }
-
-    //         return bounds;
-    //     }
-    //     else
-    //     {
-    //         Debug.LogWarning($"No renderers found on {go.name} or its children");
-    //         return new Bounds();
-    //     }
-    // }
-
     Bounds GetChildRendererBounds(GameObject go)
     {
         Renderer[] renderers = go.GetComponentsInChildren<Renderer>();
