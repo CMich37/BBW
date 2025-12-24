@@ -61,6 +61,7 @@ public class HouseGenerator : MonoBehaviour
         occupiedBoundsPerFloor[3] = new List<Bounds>();
 
         isFourFloors = false;
+
         if (isFourFloors)
         {
             Debug.Log("is 4 floors");
@@ -94,6 +95,61 @@ public class HouseGenerator : MonoBehaviour
             PlaceRoom(1, coreRooms[order[i] - 1], isFirst, isFourFloors);
         }
         Debug.Log($"Placed {placedRooms.Count} rooms on floor 1");
+
+        // === SECONDARY ROOMS LOGIC ===
+        // Check how many secondary rooms to place on first floor
+        if (isFourFloors)
+        {
+            // If 4 floors, randomly decide how many secondary rooms to place on floor 1
+            int numSecondaryRooms = Random.Range(0, otherRooms.Length + 1); // 0 to otherRooms.Length
+            
+            if (numSecondaryRooms == 0)
+            {
+                // Place no secondary rooms on first floor - save them for upper floors
+                Debug.Log("Placing 0 secondary rooms on floor 1 (saving for upper floors)");
+                return;
+            }
+            else if (numSecondaryRooms == 1)
+            {
+                // Place 1 secondary room - pick random one from otherRooms
+                int randomIndex = Random.Range(0, otherRooms.Length);
+                PlaceRoom(1, otherRooms[randomIndex], false, false);
+                Debug.Log($"Placed 1 secondary room on floor 1: {otherRooms[randomIndex].roomName}");
+            }
+            else
+            {
+                // Place multiple secondary rooms - randomize which ones and their order
+                List<int> secOrder = GetRandomOrder(numSecondaryRooms);
+                Debug.Log($"Placing {numSecondaryRooms} secondary rooms on floor 1 in order: {string.Join(", ", secOrder)}");
+                
+                for (int i = 0; i < secOrder.Count; i++)
+                {
+                    int roomIndex = secOrder[i] - 1; // Convert to 0-based index
+                    PlaceRoom(1, otherRooms[roomIndex], false, false);
+                }
+            }
+        }
+        else
+        {
+            // If only 3 floors, place ALL secondary rooms on first floor
+            if (otherRooms.Length > 0)
+            {
+                List<int> secOrder = GetRandomOrder(otherRooms.Length);
+                Debug.Log($"3 floors detected - Placing all {otherRooms.Length} secondary rooms on floor 1 in order: {string.Join(", ", secOrder)}");
+                
+                for (int i = 0; i < secOrder.Count; i++)
+                {
+                    int roomIndex = secOrder[i] - 1; // Convert to 0-based index
+                    PlaceRoom(1, otherRooms[roomIndex], false, false);
+                }
+                
+                Debug.Log($"Floor 1 complete with all secondary rooms. Total rooms: {placedRooms.Count}");
+            }
+            else
+            {
+                Debug.LogWarning("No secondary rooms available in otherRooms array");
+            }
+        }
     }
 
     void PlaceRoom(int floor, RoomTypeSO roomType, bool isFirst, bool needsStairs = false)
@@ -152,13 +208,6 @@ public class HouseGenerator : MonoBehaviour
             new Vector3(roomDimensions.x, floorHeight, roomDimensions.y)
         );
         roomInstance.bounds = roomBounds;
-
-        // Instantiate the room prefab
-        // roomInstance.gameObject = Instantiate(
-        //     selectedLayout.prefab,
-        //     roomPosition + Vector3.up * (floor - 1) * floorHeight,
-        //     Quaternion.identity
-        // );
 
         Vector3 instantiatePos = roomPosition - new Vector3(prefabBounds.center.x, 0, prefabBounds.center.z);
         instantiatePos += Vector3.up * (floor - 1) * floorHeight;
