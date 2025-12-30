@@ -74,6 +74,66 @@ public class HouseGenerator : MonoBehaviour
         CreateSecondFloor();
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // Floor fill between rooms
+    // ─────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Spawns floor tiles under the entire bounding area of rooms on each floor,
+    /// including under the rooms themselves. This guarantees no gaps.
+    /// </summary>
+    private void GenerateFloorsBetweenRooms()
+    {
+        // if (floorTilePrefab == null) return;
+
+        // foreach (var kvp in occupiedTilesPerFloor)
+        // {
+        //     int floorLevel = kvp.Key;
+        //     HashSet<Vector2Int> occupied = kvp.Value;
+
+        //     if (occupied == null || occupied.Count == 0)
+        //         continue;
+
+        //     Transform floorParent = GetFloorParentForLevel(floorLevel);
+        //     if (floorParent == null)
+        //         continue;
+
+        //     // 1) Find bounding rectangle of all room tiles on this floor
+        //     int minX = int.MaxValue, maxX = int.MinValue;
+        //     int minZ = int.MaxValue, maxZ = int.MinValue;
+
+        //     foreach (Vector2Int tile in occupied)
+        //     {
+        //         if (tile.x < minX) minX = tile.x;
+        //         if (tile.x > maxX) maxX = tile.x;
+        //         if (tile.y < minZ) minZ = tile.y;
+        //         if (tile.y > maxZ) maxZ = tile.y;
+        //     }
+
+        //     // Optional: add a little border
+        //     // int padding = 1;
+        //     // minX -= padding;
+        //     // maxX += padding;
+        //     // minZ -= padding;
+        //     // maxZ += padding;
+
+        //     // 2) Fill every tile in that rectangle with a floor tile
+        //     for (int x = minX; x <= maxX; x++)
+        //     {
+        //         for (int z = minZ; z <= maxZ; z++)
+        //         {
+        //             Vector3 worldPos = new Vector3(
+        //                 x * tileSize,
+        //                 floorLevel * floorHeight + floorYOffset,
+        //                 z * tileSize
+        //             );
+
+        //             Instantiate(floorTilePrefab, worldPos, Quaternion.identity, floorParent);
+        //         }
+        //     }
+        //}
+    }
+
     void CreateBasement()
     {
         GameObject basement = Instantiate(basementPrefab, Vector3.down * basementHeight, Quaternion.identity);

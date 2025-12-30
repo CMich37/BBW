@@ -1,6 +1,6 @@
 using System;
 using Akila.FPSFramework;
-using UnityEditor.Animations;
+using UnityEngine.Animations;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
