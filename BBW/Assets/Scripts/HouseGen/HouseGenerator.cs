@@ -7,7 +7,7 @@ public class HouseGenerator : MonoBehaviour
     [Header("Config")]
     public float basementHeight = 3f;
     public float atticHeight = 2.5f;
-    public float floorHeight = 3f;
+    public float floorHeight = 2.58f;
     public float hallwayWidth = 10f;
     public float roomSpacing = 0f;
 
@@ -92,7 +92,7 @@ public class HouseGenerator : MonoBehaviour
         for (int i = 0; i < order.Count; i++)
         {
             bool isFirst = (i == 0);
-            PlaceRoom(1, coreRooms[order[i] - 1], isFirst, isFourFloors);
+            PlaceRoom(1, coreRooms[order[i] - 1], isFirst, isFourFloors, false, new Vector2());
         }
         Debug.Log($"Placed {placedRooms.Count} rooms on floor 1");
 
@@ -113,7 +113,7 @@ public class HouseGenerator : MonoBehaviour
             {
                 // Place 1 secondary room - pick random one from otherRooms
                 int randomIndex = Random.Range(0, otherRooms.Length);
-                PlaceRoom(1, otherRooms[randomIndex], false, false);
+                PlaceRoom(1, otherRooms[randomIndex], false, false, false, new Vector2());
                 Debug.Log($"Placed 1 secondary room on floor 1: {otherRooms[randomIndex].roomName}");
             }
             else
@@ -125,7 +125,7 @@ public class HouseGenerator : MonoBehaviour
                 for (int i = 0; i < secOrder.Count; i++)
                 {
                     int roomIndex = secOrder[i] - 1; // Convert to 0-based index
-                    PlaceRoom(1, otherRooms[roomIndex], false, false);
+                    PlaceRoom(1, otherRooms[roomIndex], false, false, false, new Vector2());
                 }
             }
         }
@@ -140,7 +140,7 @@ public class HouseGenerator : MonoBehaviour
                 for (int i = 0; i < secOrder.Count; i++)
                 {
                     int roomIndex = secOrder[i] - 1; // Convert to 0-based index
-                    PlaceRoom(1, otherRooms[roomIndex], false, false);
+                    PlaceRoom(1, otherRooms[roomIndex], false, false, false, new Vector2());
                 }
                 
                 Debug.Log($"Floor 1 complete with all secondary rooms. Total rooms: {placedRooms.Count}");
@@ -152,7 +152,7 @@ public class HouseGenerator : MonoBehaviour
         }
     }
 
-    void PlaceRoom(int floor, RoomTypeSO roomType, bool isFirst, bool needsStairs = false)
+    void PlaceRoom(int floor, RoomTypeSO roomType, bool isFirst, bool needsStairs = false, bool overSomething = false, Vector2 somethingPosition = new Vector2())
     {
         // Select a layout from the room type
         RoomLayout selectedLayout = SelectLayout(roomType, needsStairs);
@@ -174,12 +174,20 @@ public class HouseGenerator : MonoBehaviour
 
         Vector3 roomPosition;
 
-        if (isFirst)
+        if (isFirst && floor == 1)
         {
             // First room is always at origin on the flat plane
             roomPosition = Vector3.zero;
             if (debugLogging)
                 Debug.Log($"[PlaceRoom] {roomType.roomName} - First room, placing at origin");
+        }
+        else if (isFirst && floor == 2)
+        {
+            // First room is always at origin on the flat plane
+            float foyerFlushOffset = roomDimensions.x / 2;
+            roomPosition = new Vector3(somethingPosition.x - (5+foyerFlushOffset), 0, somethingPosition.y);
+            if (debugLogging)
+                Debug.Log($"[PlaceRoom] {roomType.roomName} - Placing over foyer");
         }
         else
         {
@@ -492,10 +500,27 @@ public class HouseGenerator : MonoBehaviour
 
         List<int> order = GetRandomOrder(remainingRooms.Count);
 
+        RoomInstance firstFloorFoyer = placedRooms.Find(r => r.floorLevel == 1 && r.type == foyer);
+
+        if (firstFloorFoyer == null)
+        {
+            Debug.LogError("Could not find foyer on first floor!");
+            return;
+        }
+        Vector2 foyerPos = new Vector2(firstFloorFoyer.position.x, firstFloorFoyer.position.z);
+
         for (int i = 0; i < order.Count; i++)
         {
             bool isFirst = (i == 0);
-            PlaceRoom(2, remainingRooms[order[i] - 1], isFirst, isFourFloors);
+            if (isFirst)
+            {
+                PlaceRoom(2, remainingRooms[order[i] - 1], isFirst, isFourFloors, true, foyerPos);
+
+            }
+            else
+            {
+                PlaceRoom(2, remainingRooms[order[i] - 1], isFirst, isFourFloors, true, new Vector2());
+            }
         }
 
         return;
