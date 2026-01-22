@@ -3,7 +3,6 @@ using Akila.FPSFramework;
 using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 using TMPro;
 
 public class PlayerController : MonoBehaviour
@@ -24,17 +23,7 @@ public class PlayerController : MonoBehaviour
     [Header("Interaction & Inventory")]
     [SerializeField] private float interactRange = 3f;
     [SerializeField] private LayerMask interactableLayer;
-    [SerializeField] private GameObject inventoryUI;
-
-    // Inventory slots
-    private InteractableItem[] inventorySlots = new InteractableItem[4];
-    // 0 = right hand, 1 = left hand, 2 = pocket1, 3 = pocket2
-
-    [Header("UI Slots")]
-    [SerializeField] private Image uiRightHand;
-    [SerializeField] private Image uiLeftHand;
-    [SerializeField] private Image uiPocket1;
-    [SerializeField] private Image uiPocket2;
+    [SerializeField] private InventoryManager inventoryManager;
 
     [Header("Prompt UI")]
     [SerializeField] private TMP_Text pickupPrompt;
@@ -60,15 +49,17 @@ public class PlayerController : MonoBehaviour
         lookAction.Enable();
         interactAction.Enable();
         inventoryAction.Enable();
-
-        inventoryAction.performed += ctx => ToggleInventoryUI();
     }
 
     private void Start()
     {
-        inventoryUI.SetActive(false);
         pickupPrompt.gameObject.SetActive(false);
-        RefreshUI();
+        
+        // Find InventoryManager if not assigned
+        if (inventoryManager == null)
+        {
+            inventoryManager = FindObjectOfType<InventoryManager>();
+        }
     }
 
     private void OnEnable()
@@ -87,10 +78,11 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        // Lock cursor (no inventory UI to toggle)
         if (lockCursor)
         {
             Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible   = false;
+            Cursor.visible = false;
         }
 
         HandleInteract();
@@ -116,7 +108,18 @@ public class PlayerController : MonoBehaviour
 
                 if (interactAction.triggered)
                 {
-                    AddToInventory(itemComp);
+                    if (inventoryManager != null)
+                    {
+                        bool success = inventoryManager.PickupItem(itemComp);
+                        if (!success)
+                        {
+                            // Item pickup failed (inventory full) - message is handled by InventoryManager
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("InventoryManager not found! Cannot pick up item.");
+                    }
                     pickupPrompt.gameObject.SetActive(false);
                 }
                 return;
@@ -126,46 +129,6 @@ public class PlayerController : MonoBehaviour
         pickupPrompt.gameObject.SetActive(false);
     }
 
-    // ——— Inventory Methods ———
-    private void ToggleInventoryUI()
-    {
-        inventoryUI.SetActive(!inventoryUI.activeSelf);
-    }
-
-    private void AddToInventory(InteractableItem item)
-    {
-        // Find first empty slot
-        for (int i = 0; i < inventorySlots.Length; i++)
-        {
-            if (inventorySlots[i] == null)
-            {
-                inventorySlots[i] = item;
-                item.gameObject.SetActive(false); // hide in world
-                RefreshUI();
-                return;
-            }
-        }
-        // Inventory full: you could show a “full” message here
-    }
-
-    private void RefreshUI()
-    {
-        // Right Hand (slot 0)
-        uiRightHand.sprite = inventorySlots[0] != null ? inventorySlots[0].icon : null;
-        uiRightHand.enabled = inventorySlots[0] != null;
-
-        // Left Hand (slot 1)
-        uiLeftHand.sprite = inventorySlots[1] != null ? inventorySlots[1].icon : null;
-        uiLeftHand.enabled = inventorySlots[1] != null;
-
-        // Pocket1 (slot 2)
-        uiPocket1.sprite = inventorySlots[2] != null ? inventorySlots[2].icon : null;
-        uiPocket1.enabled = inventorySlots[2] != null;
-
-        // Pocket2 (slot 3)
-        uiPocket2.sprite = inventorySlots[3] != null ? inventorySlots[3].icon : null;
-        uiPocket2.enabled = inventorySlots[3] != null;
-    }
 
     private void Look()
     {
