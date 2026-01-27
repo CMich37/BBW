@@ -10,7 +10,12 @@ public class PlayerController : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private Rigidbody rb;
     [SerializeField] private float movespeed = 10;
+    [SerializeField] private float crouchSpeed = 5f;
+    [SerializeField] private float crouchHeight = 0.5f;
+    [SerializeField] private float normalHeight = 2f;
     private Vector2 moveDir;
+    private bool isCrouching = false;
+    private CapsuleCollider capsuleCollider; // Assuming player has capsule collider
 
     [Header("Camera")]
     [SerializeField] public Transform playerCam;
@@ -38,6 +43,11 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        capsuleCollider = GetComponent<CapsuleCollider>();
+        if (capsuleCollider == null)
+        {
+            capsuleCollider = GetComponentInChildren<CapsuleCollider>();
+        }
 
         var map = inputs.FindActionMap("Player");
         moveAction      = map.FindAction("Move");
@@ -53,7 +63,8 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        pickupPrompt.gameObject.SetActive(false);
+        if (pickupPrompt != null)
+            pickupPrompt.gameObject.SetActive(false);
         
         // Find InventoryManager if not assigned
         if (inventoryManager == null)
@@ -85,6 +96,7 @@ public class PlayerController : MonoBehaviour
             Cursor.visible = false;
         }
 
+        HandleCrouch();
         HandleInteract();
     }
 
@@ -97,14 +109,19 @@ public class PlayerController : MonoBehaviour
     // ——— Interaction & Pickup ———
     private void HandleInteract()
     {
+        if (playerCam == null) return;
+        
         Ray ray = new Ray(playerCam.position, playerCam.forward);
         if (Physics.Raycast(ray, out RaycastHit hit, interactRange, interactableLayer))
         {
             var itemComp = hit.collider.GetComponent<InteractableItem>();
             if (itemComp != null)
             {
-                pickupPrompt.gameObject.SetActive(true);
-                pickupPrompt.text = $"Press E to pick up {itemComp.itemName}";
+                if (pickupPrompt != null)
+                {
+                    pickupPrompt.gameObject.SetActive(true);
+                    pickupPrompt.text = $"Press E to pick up {itemComp.itemName}";
+                }
 
                 if (interactAction.triggered)
                 {
@@ -120,13 +137,15 @@ public class PlayerController : MonoBehaviour
                     {
                         Debug.LogWarning("InventoryManager not found! Cannot pick up item.");
                     }
-                    pickupPrompt.gameObject.SetActive(false);
+                    if (pickupPrompt != null)
+                        pickupPrompt.gameObject.SetActive(false);
                 }
                 return;
             }
         }
 
-        pickupPrompt.gameObject.SetActive(false);
+        if (pickupPrompt != null)
+            pickupPrompt.gameObject.SetActive(false);
     }
 
 
@@ -145,8 +164,43 @@ public class PlayerController : MonoBehaviour
         moveDir = moveAction.ReadValue<Vector2>();
         Vector3 forward = transform.forward;
         Vector3 right   = transform.right;
-        Vector3 movement = (forward * moveDir.y + right * moveDir.x) * movespeed;
+        float currentSpeed = isCrouching ? crouchSpeed : movespeed;
+        Vector3 movement = (forward * moveDir.y + right * moveDir.x) * currentSpeed;
         movement.y = rb.linearVelocity.y;
         rb.linearVelocity = movement;
+    }
+    
+    private void HandleCrouch()
+    {
+        // Check for Ctrl key press (hold to crouch, release to stand)
+        bool crouchPressed = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        
+        if (crouchPressed)
+        {
+            // Crouch when Ctrl is held
+            if (!isCrouching)
+            {
+                isCrouching = true;
+                if (capsuleCollider != null)
+                {
+                    capsuleCollider.height = crouchHeight;
+                    // Adjust center to keep feet on ground
+                    capsuleCollider.center = new Vector3(0, crouchHeight / 2f, 0);
+                }
+            }
+        }
+        else
+        {
+            // Stand up when Ctrl is released
+            if (isCrouching)
+            {
+                isCrouching = false;
+                if (capsuleCollider != null)
+                {
+                    capsuleCollider.height = normalHeight;
+                    capsuleCollider.center = new Vector3(0, normalHeight / 2f, 0);
+                }
+            }
+        }
     }
 }

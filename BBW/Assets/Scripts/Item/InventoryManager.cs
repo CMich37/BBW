@@ -10,9 +10,15 @@ public class InventoryManager : MonoBehaviour
     [SerializeField] private Image slot1Icon;
     [SerializeField] private Image slot2Icon;
     [SerializeField] private Image slot3Icon;
+    [SerializeField] private Image slot1Background; // Background that's always visible
+    [SerializeField] private Image slot2Background;
+    [SerializeField] private Image slot3Background;
+    [SerializeField] private Color selectedSlotColor = Color.yellow; // Color for selected slot highlight
+    [SerializeField] private Color normalSlotColor = Color.white; // Normal slot color
     
     [Header("Hand UI")]
     [SerializeField] private Image handIcon; // UI representation of item in hand
+    [SerializeField] private Transform handHoldPoint; // Transform where 3D item appears in hand
     
     [Header("Messages")]
     [SerializeField] private TMP_Text inventoryFullMessage;
@@ -33,6 +39,7 @@ public class InventoryManager : MonoBehaviour
     private InputAction dropAction;
     
     private Coroutine messageCoroutine;
+    private GameObject currentHandItem; // 3D item currently shown in hand
     
     private void Awake()
     {
@@ -68,6 +75,7 @@ public class InventoryManager : MonoBehaviour
     {
         UpdateHandUI();
         UpdateSlotUI();
+        UpdateSlotHighlighting();
         
         // Enable input actions
         if (slot1Action != null) slot1Action.Enable();
@@ -134,6 +142,8 @@ public class InventoryManager : MonoBehaviour
                 
                 UpdateSlotUI();
                 UpdateHandUI();
+                UpdateSlotHighlighting();
+                UpdateHandItem3D();
                 
                 Debug.Log($"Picked up {item.itemName} into slot {i + 1}");
                 return true;
@@ -152,6 +162,8 @@ public class InventoryManager : MonoBehaviour
             
         currentSlot = slotIndex;
         UpdateHandUI();
+        UpdateSlotHighlighting();
+        UpdateHandItem3D();
         Debug.Log($"Switched to slot {slotIndex + 1}");
     }
     
@@ -186,13 +198,15 @@ public class InventoryManager : MonoBehaviour
         
         UpdateSlotUI();
         UpdateHandUI();
+        UpdateSlotHighlighting();
+        UpdateHandItem3D();
         
         Debug.Log($"Dropped {itemToDrop.itemName} from slot {currentSlot + 1}");
     }
     
     private void UpdateSlotUI()
     {
-        // Update slot icons
+        // Update slot icons (backgrounds stay visible always)
         if (slot1Icon != null)
         {
             slot1Icon.sprite = inventory[0] != null ? (inventory[0].icon != null ? inventory[0].icon : (inventory[0].itemData != null ? inventory[0].itemData.icon : null)) : null;
@@ -209,6 +223,61 @@ public class InventoryManager : MonoBehaviour
         {
             slot3Icon.sprite = inventory[2] != null ? (inventory[2].icon != null ? inventory[2].icon : (inventory[2].itemData != null ? inventory[2].itemData.icon : null)) : null;
             slot3Icon.enabled = inventory[2] != null && slot3Icon.sprite != null;
+        }
+    }
+    
+    private void UpdateSlotHighlighting()
+    {
+        // Highlight selected slot
+        if (slot1Background != null)
+        {
+            slot1Background.color = currentSlot == 0 ? selectedSlotColor : normalSlotColor;
+        }
+        if (slot2Background != null)
+        {
+            slot2Background.color = currentSlot == 1 ? selectedSlotColor : normalSlotColor;
+        }
+        if (slot3Background != null)
+        {
+            slot3Background.color = currentSlot == 2 ? selectedSlotColor : normalSlotColor;
+        }
+    }
+    
+    private void UpdateHandItem3D()
+    {
+        // Destroy current hand item if exists
+        if (currentHandItem != null)
+        {
+            Destroy(currentHandItem);
+            currentHandItem = null;
+        }
+        
+        // Show 3D item in hand if there's an item in selected slot
+        InteractableItem currentItem = inventory[currentSlot];
+        if (currentItem != null && handHoldPoint != null)
+        {
+            // Create a copy of the item to show in hand
+            currentHandItem = Instantiate(currentItem.gameObject, handHoldPoint);
+            currentHandItem.SetActive(true);
+            
+            // Reset transform
+            currentHandItem.transform.localPosition = Vector3.zero;
+            currentHandItem.transform.localRotation = Quaternion.identity;
+            currentHandItem.transform.localScale = Vector3.one;
+            
+            // Disable collider and rigidbody if they exist
+            Collider col = currentHandItem.GetComponent<Collider>();
+            if (col != null) col.enabled = false;
+            
+            Rigidbody rb = currentHandItem.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = true;
+                rb.useGravity = false;
+            }
+            
+            // Make sure it's visible (set layer if needed)
+            currentHandItem.layer = handHoldPoint.gameObject.layer;
         }
     }
     
