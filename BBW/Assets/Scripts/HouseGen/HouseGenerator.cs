@@ -30,6 +30,7 @@ public class HouseGenerator : MonoBehaviour
     [Header("Debug")]
     public bool debugLogging = false;
 
+    [Header("Tracking")]
     // Track all occupied space per floor using Bounds
     private bool isFourFloors;
     private Dictionary<int, List<Bounds>> occupiedBoundsPerFloor = new Dictionary<int, List<Bounds>>();
@@ -45,6 +46,9 @@ public class HouseGenerator : MonoBehaviour
         public Bounds bounds; // For collision detection
         public RoomLayout layout; // Store layout reference
     }
+
+    private int foyerListPos;
+    private GameObject foyerStairs;
 
     void Start()
     {
@@ -71,7 +75,11 @@ public class HouseGenerator : MonoBehaviour
         }
         CreateBasement();
         CreateFirstFloor();
-        CreateSecondFloor();
+        if (isFourFloors)
+        {
+            CreateSecondFloor();
+        }
+        
     }
 
     void CreateBasement()
@@ -92,6 +100,12 @@ public class HouseGenerator : MonoBehaviour
         for (int i = 0; i < order.Count; i++)
         {
             bool isFirst = (i == 0);
+            if (coreRooms[order[i] - 1].roomName == "Foyer")
+            {
+                Debug.Log("foyer stairs being added as number" + i);
+                foyerListPos = order[i] - 1;
+                // return;
+            }
             PlaceRoom(1, coreRooms[order[i] - 1], isFirst, isFourFloors, false, new Vector2());
         }
         Debug.Log($"Placed {placedRooms.Count} rooms on floor 1");
@@ -507,7 +521,23 @@ public class HouseGenerator : MonoBehaviour
             Debug.LogError("Could not find foyer on first floor!");
             return;
         }
+
+        //stair update
         Vector2 foyerPos = new Vector2(firstFloorFoyer.position.x, firstFloorFoyer.position.z);
+        print(foyerListPos);
+
+        // foyerStairs = placedRooms[foyerListPos].gameObject.transform.Find("stairs").gameObject;
+        Transform stairsTransform = firstFloorFoyer.gameObject.transform.Find("stairs");
+        if (stairsTransform == null)
+            {
+                Debug.LogError("No 'stairs' child found on foyer prefab!");
+                return;
+            }
+        foyerStairs = stairsTransform.gameObject;
+
+        Bounds stairBounds = GetChildRendererBounds(foyerStairs);
+        occupiedBoundsPerFloor[2].Add(stairBounds);
+        //
 
         for (int i = 0; i < order.Count; i++)
         {
