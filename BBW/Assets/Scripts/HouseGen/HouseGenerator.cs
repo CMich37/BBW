@@ -29,6 +29,7 @@ public class HouseGenerator : MonoBehaviour
 
     [Header("Debug")]
     public bool debugLogging = false;
+    public bool showSideDirections = true;
 
     [Header("Tracking")]
     // Track all occupied space per floor using Bounds
@@ -585,49 +586,123 @@ public class HouseGenerator : MonoBehaviour
 
 ///Debugging
 
+    // void OnDrawGizmos()
+    // {
+    //     if (!Application.isPlaying || placedRooms == null)
+    //         return;
+
+    //     // Draw bounds for each placed room
+    //     foreach (RoomInstance room in placedRooms)
+    //     {
+    //         // Draw the calculated bounds (collision detection box) in GREEN
+    //         Gizmos.color = Color.green;
+    //         DrawBoundsCube(room.bounds);
+
+    //         // Draw the actual prefab bounds in RED
+    //         if (room.gameObject != null)
+    //         {
+    //             Bounds actualBounds = GetGameObjectBounds(room.gameObject);
+    //             Gizmos.color = Color.red;
+    //             DrawBoundsCube(actualBounds);
+
+    //             // Draw individual renderer bounds in CYAN
+
+    //             Renderer[] renderers = room.gameObject.GetComponentsInChildren<Renderer>();
+    //             Gizmos.color = Color.cyan;
+                
+    //             if (debugLogging)
+    //             {
+    //                 Debug.Log($"[OnDrawGizmos] {room.type.roomName} - Individual renderer bounds:");
+    //             }
+                
+    //             foreach (Renderer renderer in renderers)
+    //             {
+    //                 if (debugLogging)
+    //                 {
+    //                     Debug.Log($"  {renderer.gameObject.name}: Center={renderer.bounds.center}, Size={renderer.bounds.size}");
+    //                 }
+    //                 DrawBoundsCube(renderer.bounds);
+    //             }
+    //         }
+
+    //         // Draw center point in YELLOW
+    //         Gizmos.color = Color.yellow;
+    //         Gizmos.DrawSphere(room.position, 0.2f);
+    //     }
+    // }
+
     void OnDrawGizmos()
     {
-        if (!Application.isPlaying || placedRooms == null)
-            return;
+    if (!Application.isPlaying || placedRooms == null)
+        return;
 
-        // Draw bounds for each placed room
-        foreach (RoomInstance room in placedRooms)
+    // Draw bounds for each placed room
+    foreach (RoomInstance room in placedRooms)
+    {
+        // Draw the calculated bounds (collision detection box) in GREEN
+        // Gizmos.color = Color.green;
+        // DrawBoundsCube(room.bounds);
+
+        // // Draw the actual prefab bounds in RED
+        // if (room.gameObject != null)
+        // {
+        //     Bounds actualBounds = GetGameObjectBounds(room.gameObject);
+        //     Gizmos.color = Color.red;
+        //     DrawBoundsCube(actualBounds);
+
+        //     // Draw individual renderer bounds in CYAN
+        //     Renderer[] renderers = room.gameObject.GetComponentsInChildren<Renderer>();
+        //     Gizmos.color = Color.cyan;
+            
+        //     if (debugLogging)
+        //     {
+        //         Debug.Log($"[OnDrawGizmos] {room.type.roomName} - Individual renderer bounds:");
+        //     }
+            
+        //     foreach (Renderer renderer in renderers)
+        //     {
+        //         if (debugLogging)
+        //         {
+        //             Debug.Log($"  {renderer.gameObject.name}: Center={renderer.bounds.center}, Size={renderer.bounds.size}");
+        //         }
+        //         DrawBoundsCube(renderer.bounds);
+        //     }
+        // }
+
+        // Draw center point in YELLOW
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawSphere(room.position, 0.2f);
+
+        // ========== NEW: SIDE DIRECTION RAYS ==========
+        if (showSideDirections)
         {
-            // Draw the calculated bounds (collision detection box) in GREEN
+            Vector3 center = room.position;
+            // Half extents of the room (width/2, depth/2)
+            float halfWidth = room.dimensions.x * 0.5f;
+            float halfDepth = room.dimensions.y * 0.5f;
+            float rayLength = 2.0f; // Length of the ray beyond the wall
+
+            // +X (Right) - Red
+            Gizmos.color = Color.red;
+            Vector3 startXPos = center + Vector3.right * halfWidth;
+            Gizmos.DrawLine(startXPos, startXPos + Vector3.right * rayLength);
+
+            // -X (Left) - Green
             Gizmos.color = Color.green;
-            DrawBoundsCube(room.bounds);
+            Vector3 startXNeg = center + Vector3.left * halfWidth;
+            Gizmos.DrawLine(startXNeg, startXNeg + Vector3.left * rayLength);
 
-            // Draw the actual prefab bounds in RED
-            if (room.gameObject != null)
-            {
-                Bounds actualBounds = GetGameObjectBounds(room.gameObject);
-                Gizmos.color = Color.red;
-                DrawBoundsCube(actualBounds);
+            // +Z (Front) - Blue
+            Gizmos.color = Color.blue;
+            Vector3 startZPos = center + Vector3.forward * halfDepth;
+            Gizmos.DrawLine(startZPos, startZPos + Vector3.forward * rayLength);
 
-                // Draw individual renderer bounds in CYAN
-
-                Renderer[] renderers = room.gameObject.GetComponentsInChildren<Renderer>();
-                Gizmos.color = Color.cyan;
-                
-                if (debugLogging)
-                {
-                    Debug.Log($"[OnDrawGizmos] {room.type.roomName} - Individual renderer bounds:");
-                }
-                
-                foreach (Renderer renderer in renderers)
-                {
-                    if (debugLogging)
-                    {
-                        Debug.Log($"  {renderer.gameObject.name}: Center={renderer.bounds.center}, Size={renderer.bounds.size}");
-                    }
-                    DrawBoundsCube(renderer.bounds);
-                }
-            }
-
-            // Draw center point in YELLOW
+            // -Z (Back) - Yellow (or magenta for better contrast)
             Gizmos.color = Color.yellow;
-            Gizmos.DrawSphere(room.position, 0.2f);
+            Vector3 startZNeg = center + Vector3.back * halfDepth;
+            Gizmos.DrawLine(startZNeg, startZNeg + Vector3.back * rayLength);
         }
+    }
     }
 
     void DrawBoundsCube(Bounds bounds)

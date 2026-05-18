@@ -15,3 +15,5 @@ MonoBehaviour:
   prefab: {fileID: 1529213026765656576, guid: d42a99ebffe7e7943b95e7ad49d217a5, type: 3}
   dimensions: {x: 7.48, y: 5.02}
   hasStairs: 0
+  weight: 0
+  walkableSides: 00010000
