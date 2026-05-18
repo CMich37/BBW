@@ -46,6 +46,7 @@ public class HouseGenerator : MonoBehaviour
         public int floorLevel;
         public Bounds bounds; // For collision detection
         public RoomLayout layout; // Store layout reference
+        public int rotationSteps; // NEW: 0=0°, 1=90°, 2=180°, 3=270° (Y axis, CW)
     }
 
     private int foyerListPos;
@@ -578,6 +579,38 @@ public class HouseGenerator : MonoBehaviour
         
         return remaining;
     }
+
+
+    //Rotations
+    // Given a LOCAL side index and how many 90-degree CW steps the room was rotated,
+    // returns the WORLD side index that local side now points toward.
+    // Side indices: 0=+X(Right), 1=-X(Left), 2=+Z(Front), 3=-Z(Back)
+    // CW rotation maps: +X→+Z→-X→-Z→+X  which in indices is: 0→2→1→3→0
+    // The lookup table encodes: worldSide = rotationMap[rotSteps][localSide]
+    private static readonly int[,] localToWorld = new int[4, 4]
+    {
+        { 0, 1, 2, 3 }, // 0°:   local == world
+        { 3, 2, 0, 1 }, // 90°:  local+X(0)→world-Z(3), local-X(1)→world+Z(2), local+Z(2)→world+X(0), local-Z(3)→world-X(1)
+        { 1, 0, 3, 2 }, // 180°: local+X(0)→world-X(1), local-X(1)→world+X(0), local+Z(2)→world-Z(3), local-Z(3)→world+Z(2)
+        { 2, 3, 1, 0 }, // 270°: local+X(0)→world+Z(2), local-X(1)→world-Z(3), local+Z(2)→world-X(1), local-Z(3)→world+X(0)
+    };
+
+    // Inverse: given a WORLD side and rotation steps, returns the LOCAL side index to check in walkableSides[]
+    private int WorldSideToLocal(int worldSide, int rotSteps)
+    {
+        for (int local = 0; local < 4; local++)
+            if (localToWorld[rotSteps, local] == worldSide) return local;
+        return worldSide; // fallback (should never reach)
+    }
+
+    // Is a specific WORLD-SPACE side of a placed room walkable?
+    private bool IsWorldSideWalkable(RoomInstance room, int worldSideIndex)
+    {
+        if (room.layout == null || room.layout.walkableSides == null) return true;
+        int localSide = WorldSideToLocal(worldSideIndex, room.rotationSteps);
+        return room.layout.walkableSides[localSide];
+    }
+    ///////////
 
     void CreateAttic()
     {
