@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
-using Unity.AI.Navigation;
 using UnityEngine.AI;
+using Unity.AI.Navigation;
 
-public class HouseGenerator3 : MonoBehaviour
+public class HouseGenerator3_WithEnemyAI : MonoBehaviour
 {
     [Header("Config")]
     public float basementHeight = 3f;
@@ -33,18 +33,14 @@ public class HouseGenerator3 : MonoBehaviour
     public bool debugLogging = false;
     public bool showSideDirections = true;
 
-    [Header("Spawning")]
-    public GameObject playerPrefab;
-    public float minEnemyDistanceFromPlayer = 15f;
-    public float spawnSampleRadius = 10f;
-
-    private GameObject spawnedPlayer;
-    private GameObject spawnedEnemy;
-
-    [Header("AI")]
+    [Header("Enemy AI / Runtime NavMesh")]
     public NavMeshSurface navMeshSurface;
     public GameObject enemyPrefab;
     public Transform player;
+    public int enemySpawnFloor = 1;
+    public float enemySpawnSearchRadius = 10f;
+    public bool buildNavMeshAfterGeneration = true;
+    public bool spawnEnemyAfterGeneration = true;
 
     [Header("Tracking")]
     // Track all occupied space per floor using Bounds
@@ -97,81 +93,79 @@ public class HouseGenerator3 : MonoBehaviour
             CreateSecondFloor();
         }
 
-
-        navMeshSurface.BuildNavMesh();
-        SpawnPlayerAndEnemy();
+        FinishHouseForEnemyAI();
         
     }
 
-    void SpawnPlayerAndEnemy()
+
+    void FinishHouseForEnemyAI()
     {
-        if (playerPrefab == null || enemyPrefab == null)
+        // The house is generated at runtime, so the NavMesh must be built after all rooms exist.
+        if (buildNavMeshAfterGeneration)
         {
-            Debug.LogWarning("Player prefab or enemy prefab not assigned.");
-            return;
-        }
-
-        if (placedRooms.Count < 2)
-        {
-            Debug.LogWarning("Need at least 2 rooms to spawn player and enemy apart.");
-            return;
-        }
-
-        // Pick player spawn room
-        RoomInstance playerRoom = placedRooms[0];
-
-        Vector3 playerStart = playerRoom.position + Vector3.up * 0.5f;
-
-        if (!NavMesh.SamplePosition(playerStart, out NavMeshHit playerHit, spawnSampleRadius, NavMesh.AllAreas))
-        {
-            Debug.LogWarning("Could not find NavMesh position for player.");
-            return;
-        }
-
-        // Find enemy room far enough away
-        RoomInstance enemyRoom = null;
-        float bestDistance = 0f;
-
-        foreach (RoomInstance room in placedRooms)
-        {
-            float distance = Vector3.Distance(playerRoom.position, room.position);
-
-            if (distance > bestDistance)
+            if (navMeshSurface == null)
             {
-                bestDistance = distance;
-                enemyRoom = room;
+                Debug.LogWarning("No NavMeshSurface assigned. Add a NavMeshSurface to an empty GameObject and drag it here.");
+            }
+            else
+            {
+                navMeshSurface.BuildNavMesh();
+                Debug.Log("Runtime NavMesh built after house generation.");
             }
         }
 
-        if (enemyRoom == null || bestDistance < minEnemyDistanceFromPlayer)
+        if (spawnEnemyAfterGeneration)
         {
-            Debug.LogWarning("Could not find enemy spawn far enough away. Using farthest room anyway.");
+            SpawnEnemy();
         }
+    }
 
-        Vector3 enemyStart = enemyRoom.position + Vector3.up * 0.5f;
-
-        if (!NavMesh.SamplePosition(enemyStart, out NavMeshHit enemyHit, spawnSampleRadius, NavMesh.AllAreas))
+    void SpawnEnemy()
+    {
+        if (enemyPrefab == null)
         {
-            Debug.LogWarning("Could not find NavMesh position for enemy.");
+            Debug.LogWarning("Enemy prefab is not assigned.");
             return;
         }
 
-        spawnedPlayer = Instantiate(playerPrefab, playerHit.position, Quaternion.identity);
-        spawnedPlayer.tag = "Player";
-
-        spawnedEnemy = Instantiate(enemyPrefab, enemyHit.position, Quaternion.identity);
-
-        HusbandAI ai = spawnedEnemy.GetComponent<HusbandAI>();
-        if (ai != null)
+        if (player == null)
         {
-            ai.player = spawnedPlayer.transform;
+            Debug.LogWarning("Player transform is not assigned.");
+            return;
         }
 
-        player = spawnedPlayer.transform;
+        if (placedRooms == null || placedRooms.Count == 0)
+        {
+            Debug.LogWarning("No rooms were placed, so enemy cannot spawn.");
+            return;
+        }
 
-        Debug.Log("Player spawned at: " + playerHit.position);
-        Debug.Log("Enemy spawned at: " + enemyHit.position);
-        Debug.Log("Spawn distance: " + Vector3.Distance(playerHit.position, enemyHit.position));
+        RoomInstance spawnRoom = placedRooms.FirstOrDefault(r => r.floorLevel == enemySpawnFloor);
+        if (spawnRoom == null)
+        {
+            spawnRoom = placedRooms[0];
+        }
+
+        Vector3 desiredSpawnPosition = spawnRoom.position + Vector3.up * ((spawnRoom.floorLevel - 1) * floorHeight + 0.25f);
+
+        if (NavMesh.SamplePosition(desiredSpawnPosition, out NavMeshHit hit, enemySpawnSearchRadius, NavMesh.AllAreas))
+        {
+            GameObject enemy = Instantiate(enemyPrefab, hit.position, Quaternion.identity);
+
+            EnemyChaseAI chaseAI = enemy.GetComponent<EnemyChaseAI>();
+            if (chaseAI != null)
+            {
+                chaseAI.player = player;
+            }
+            else
+            {
+                Debug.LogWarning("Enemy spawned, but it does not have EnemyChaseAI attached.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Could not find a valid NavMesh position for the enemy spawn.");
+        }
     }
 
     void CreateBasement()
