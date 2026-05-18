@@ -554,6 +554,7 @@ GameObject:
   - component: {fileID: 1722251714}
   - component: {fileID: 1722251716}
   - component: {fileID: 1722251717}
+  - component: {fileID: 1722251718}
   m_Layer: 0
   m_Name: HouseGenerator
   m_TagString: Untagged
@@ -655,7 +656,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1722251713}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05ee0612881b2034890237c2e6dfc3e1, type: 3}
   m_Name: 
@@ -676,6 +677,48 @@ MonoBehaviour:
   kitchen: {fileID: 11400000, guid: 0ec6ee76c0cbd4070a25ecf0bc382ba2, type: 2}
   livingRoom: {fileID: 11400000, guid: f661d024fa3f84490b07826f55ef26ac, type: 2}
   otherRooms: []
+  branchOutProbability: 0.3
+  debugLogging: 0
+  showSideDirections: 1
+  playerPrefab: {fileID: 41730464178912201, guid: e0af69f0ca675524baf73a0aeb4bc8ac,
+    type: 3}
+  minEnemyDistanceFromPlayer: 15
+  spawnSampleRadius: 10
+  navMeshSurface: {fileID: 751800308}
+  enemyPrefab: {fileID: 6711404630561640078, guid: c4018ab8e262db54fb061244b43e4d34,
+    type: 3}
+  player: {fileID: 9106895828883492008, guid: e0af69f0ca675524baf73a0aeb4bc8ac, type: 3}
+--- !u!114 &1722251718
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1722251713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2737eb77f04db2945b72bce307285b57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  basementHeight: 3
+  atticHeight: 2.5
+  floorHeight: 2.58
+  hallwayWidth: 10
+  roomSpacing: 0
+  basementPrefab: {fileID: 6512803705519864772, guid: c2aab63108fe6434d98b26159388c4de,
+    type: 3}
+  atticPrefab: {fileID: 3355770862152531564, guid: c56f545f9c955458a8f2d1ab507676ed,
+    type: 3}
+  hallwayPrefab: {fileID: 48143649766020512, guid: 13a51e0a8d097427889305050faefdc3,
+    type: 3}
+  doorPrefab: {fileID: 0}
+  foyer: {fileID: 11400000, guid: 47a7261402a8e4631815b04fe24409f4, type: 2}
+  kitchen: {fileID: 11400000, guid: 0ec6ee76c0cbd4070a25ecf0bc382ba2, type: 2}
+  livingRoom: {fileID: 11400000, guid: f661d024fa3f84490b07826f55ef26ac, type: 2}
+  otherRooms:
+  - {fileID: 11400000, guid: bc308946d4ae847efb9b3b4b96793d40, type: 2}
+  - {fileID: 11400000, guid: febe062e203c940b4931c7917805862d, type: 2}
+  - {fileID: 11400000, guid: a71ae66cab6aa4d17bd5e54f6fa9fee0, type: 2}
   branchOutProbability: 0.3
   debugLogging: 0
   showSideDirections: 1
